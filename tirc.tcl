@@ -2,6 +2,32 @@ set server "BROOKVILLE.PA.US.StarLink-IRC.Org"
 set chn #prosapologian
 set ::gotPing 0
 
+# high contrast colors for different people
+set colors {
+	darkblue
+	darkgreen
+	darkcyan
+	darkred
+	darkmagenta
+	darkorange
+	darkslategrey
+}
+
+# assign a random (but deterministic) color to a nick
+proc nickcolor {nick} {
+	binary scan $nick c* v
+	set hash 4817
+	set op +
+
+	foreach x $v {
+		set hash [expr "$hash $op $x"]
+		set op [if {$op eq {+}} {concat *} {concat +}]
+	}
+
+	set hash [expr {$hash % [llength $::colors]}]
+	return [lindex $::colors $hash]
+}
+
 proc send {msg} {
 	puts $::net $msg
 	flush $::net
@@ -11,7 +37,7 @@ proc post {} {
 	set msg [.t.cmd get]
 
 	send "PRIVMSG $::chn :$msg"
-	.t.txt insert end $msg
+	.t.txt insert end "$msg\n"
 
 	.t.cmd delete 0 end
 }
@@ -35,8 +61,8 @@ proc recv {} {
 			set ::gotPing 1
 		}
 
-		.t.txt insert end "$line\n"
-		.t.txt insert end "PONG $code\n";
+		.t.txt insert end "$line\n" ping
+		.t.txt insert end "PONG $code\n" ping
 		return
 	}
 
@@ -48,8 +74,8 @@ proc recv {} {
 		set sendName [string range $sender 1 $bangIdx]
 
 		set first [lindex $cols 3]
-		.t.txt insert end "$sendName [string range $first 1 end] "
-		.t.txt insert end "[lrange $cols 4 end]\n"
+		.t.txt insert end "$sendName [string range $first 1 end] " [nickcolor $sendName]
+		.t.txt insert end "[lrange $cols 4 end]\n" [nickcolor $sendName]
 	} else {
 		.t.txt insert end "$line\n"
 		.t.txt yview end
@@ -64,13 +90,21 @@ pack [frame .t.fTop] -side top -fill both -expand 1
 pack [scrollbar .t.fTop.scrollV -orient vert -command ".t.txt yview"
 ] -side right -expand 1 -fill y
 
+# create the main text widget
 pack [text  .t.txt -yscrollcommand ".t.fTop.scrollV set"
 ] -expand 1 -fill both -in .t.fTop -side left
+
+foreach color $colors {
+	.t.txt tag config $color -foreground $color
+}
+.t.txt tag config ping -foreground lightgrey
+
 pack [entry .t.cmd] -expand 1 -fill x
 bind .t.cmd <Return> post
  
 set ::gotPing 0
 set net [socket $server 6667]
+fconfigure $net -encoding binary
 
 fileevent $net readable recv
 
