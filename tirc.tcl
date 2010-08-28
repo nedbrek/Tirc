@@ -45,6 +45,7 @@ proc post {} {
 
 	send "PRIVMSG $::chn :$msg"
 	.t.txt insert end "$msg\n"
+	adjustWin
 
 	.t.cmd delete 0 end
 }
@@ -83,7 +84,7 @@ proc recv {} {
 
 		set first [lindex $cols 3]
 		.t.txt insert end "$sendName [string range $first 1 end] " [nickcolor $sendName]
-		.t.txt insert end "[lrange $cols 4 end]\n" [nickcolor $sendName]
+		.t.txt insert end "[join [lrange $cols 4 end]]\n" [nickcolor $sendName]
 		adjustWin
 	} else {
 		.t.txt insert end "$line\n"
@@ -113,7 +114,7 @@ bind .t.cmd <Return> post
  
 set ::gotPing 0
 set net [socket $server 6667]
-fconfigure $net -encoding binary
+fconfigure $net -encoding utf-8
 
 fileevent $net readable recv
 
