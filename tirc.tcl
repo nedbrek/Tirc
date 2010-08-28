@@ -13,6 +13,13 @@ set colors {
 	darkslategrey
 }
 
+proc adjustWin {} {
+	set cursor [.t.fTop.scrollV get]
+	if {[lindex $cursor 1] == 1.0} {
+		.t.txt yview end
+	}
+}
+
 # assign a random (but deterministic) color to a nick
 proc nickcolor {nick} {
 	binary scan $nick c* v
@@ -48,7 +55,7 @@ proc recv {} {
 		close $::net
 
 		.t.txt insert end "Socket closed\n"
-		.t.txt yview end
+		adjustWin
 		return
 	}
 
@@ -63,6 +70,7 @@ proc recv {} {
 
 		.t.txt insert end "$line\n" ping
 		.t.txt insert end "PONG $code\n" ping
+		adjustWin
 		return
 	}
 
@@ -76,9 +84,10 @@ proc recv {} {
 		set first [lindex $cols 3]
 		.t.txt insert end "$sendName [string range $first 1 end] " [nickcolor $sendName]
 		.t.txt insert end "[lrange $cols 4 end]\n" [nickcolor $sendName]
+		adjustWin
 	} else {
 		.t.txt insert end "$line\n"
-		.t.txt yview end
+		adjustWin
 	}
 }
 
