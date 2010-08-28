@@ -117,6 +117,6 @@ fconfigure $net -encoding binary
 
 fileevent $net readable recv
 
-send "NICK NedTclTest"
+send "NICK Ned"
 send "USER ned ned ned :NedBrek"
 
