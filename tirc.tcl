@@ -50,6 +50,47 @@ proc post {} {
 	.t.cmd delete 0 end
 }
 
+proc handlePing {code} {
+	send "PONG $code"
+
+	if {!$::gotPing} {
+		send "JOIN $::chn"
+		set ::gotPing 1
+	}
+
+	.t.txt insert end "PONG $code\n" ping
+	adjustWin
+}
+
+# a normal message
+proc handleMsg {line} {
+	set cols [split $line]
+
+	set sender [lindex $cols 0]
+	set bangIdx [string first "!" $sender]
+	set sendName [string range $sender 1 $bangIdx]
+
+	set nc [nickcolor $sendName]
+
+	# column 1 is PRIVMSG
+	# column 2 is target (usually channel name)
+	# column 3 starts message with ':'
+
+	set first [string range [lindex $cols 3] 1 end]
+	if {$first == "\001ACTION"} {
+		.t.txt insert end "* $sendName " $nc
+
+		# strip the trailing 1
+		set cols [lreplace $cols end end [string range [lindex $cols end] 0 end-1]]
+	} else {
+		.t.txt insert end "$sendName $first " $nc
+	}
+
+	.t.txt insert end "[join [lrange $cols 4 end]]\n" $nc
+
+	adjustWin
+}
+
 proc recv {} {
 	if [eof $::net] {
 		fileevent $::net readable ""
@@ -61,31 +102,16 @@ proc recv {} {
 	}
 
 	gets $::net line
+
 	if [regexp {^PING (:[0-9A-Za-z.\-]+)} $line -> code] {
-		send "PONG $code"
-
-		if {!$::gotPing} {
-			send "JOIN $::chn"
-			set ::gotPing 1
-		}
-
 		.t.txt insert end "$line\n" ping
-		.t.txt insert end "PONG $code\n" ping
-		adjustWin
+		handlePing $code
+
 		return
 	}
 
 	if {[regexp {[^ ]+ +PRIVMSG } $line]} {
-		set cols [split $line]
-
-		set sender [lindex $cols 0]
-		set bangIdx [string first "!" $sender]
-		set sendName [string range $sender 1 $bangIdx]
-
-		set first [lindex $cols 3]
-		.t.txt insert end "$sendName [string range $first 1 end] " [nickcolor $sendName]
-		.t.txt insert end "[join [lrange $cols 4 end]]\n" [nickcolor $sendName]
-		adjustWin
+		handleMsg $line
 	} else {
 		.t.txt insert end "$line\n"
 		adjustWin
