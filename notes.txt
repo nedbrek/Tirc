@@ -1,0 +1,10 @@
+Tur8inFan! One thing that mIRC does not natively have 
+Tur8inFan! is spell-checking
+
+Tur8inFan! one thing it has that some clients do not is tab-completion
+
+Tur8inFan! another feature that I don't think it has
+Tur8inFan! but which mibbit has
+Tur8inFan! is the feature that lines that highlight one's own nick are highlighted in some way
+
+
