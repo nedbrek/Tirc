@@ -138,12 +138,15 @@ foreach color $colors {
 pack [entry .t.cmd] -expand 1 -fill x
 bind .t.cmd <Return> post
  
-set ::gotPing 0
-set net [socket $server 6667]
-fconfigure $net -encoding utf-8
+proc connect {} {
+	set ::gotPing 0
+	set ::net [socket $::server 6667]
+	fconfigure $::net -encoding utf-8
 
-fileevent $net readable recv
+	fileevent $::net readable recv
 
-send "NICK Ned"
-send "USER ned ned ned :NedBrek"
+	send "NICK Ned"
+	send "USER ned ned ned :NedBrek"
+}
+connect
 
