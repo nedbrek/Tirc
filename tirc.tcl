@@ -64,6 +64,8 @@ proc handlePing {code} {
 
 # a normal message
 proc handleMsg {line} {
+	# strip color commands
+	regsub -all {\003([[:digit:]]+(,[[:digit:]])?)?} $line "~" line
 	set cols [split $line]
 
 	set sender [lindex $cols 0]
