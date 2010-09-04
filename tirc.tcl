@@ -141,6 +141,8 @@ pack [entry .t.cmd] -expand 1 -fill x
 bind .t.cmd <Return> post
  
 proc connect {} {
+	.t.txt insert end "Connecting to $::server\n"
+
 	set ::gotPing 0
 	set ::net [socket $::server 6667]
 	fconfigure $::net -encoding utf-8
