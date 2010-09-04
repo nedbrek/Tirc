@@ -43,7 +43,17 @@ proc send {msg} {
 proc post {} {
 	set msg [.t.cmd get]
 
-	send "PRIVMSG $::chn :$msg"
+	if {[regexp {^ */([^ ]+) *(.*)} $msg -> cmd line]} {
+		switch $cmd {
+			me {
+				set sendout "\001ACTION $line\001"
+				send "PRIVMSG $::chn :$sendout"
+			}
+		}
+	} else {
+		send "PRIVMSG $::chn :$msg"
+	}
+
 	.t.txt insert end "$msg\n"
 	adjustWin
 
