@@ -49,6 +49,10 @@ proc post {} {
 				set sendout "\001ACTION $line\001"
 				send "PRIVMSG $::chn :$sendout"
 			}
+
+			nick {
+				send "NICK $line"
+			}
 		}
 	} else {
 		send "PRIVMSG $::chn :$msg"
