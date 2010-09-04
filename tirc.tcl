@@ -53,6 +53,10 @@ proc post {} {
 			nick {
 				send "NICK $line"
 			}
+
+			quit {
+				send "QUIT $line"
+			}
 		}
 	} else {
 		send "PRIVMSG $::chn :$msg"
