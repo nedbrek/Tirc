@@ -42,6 +42,7 @@ proc send {msg} {
 
 proc post {} {
 	set msg [.t.cmd get]
+	if {$msg eq ""} {return}
 
 	if {[regexp {^ */([^ ]+) *(.*)} $msg -> cmd line]} {
 		switch $cmd {
