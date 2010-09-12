@@ -1,6 +1,7 @@
 set server "BROOKVILLE.PA.US.StarLink-IRC.Org"
 set chn #prosapologian
 set ::gotPing 0
+set ::inNames 0
 
 # high contrast colors for different people
 set colors {
@@ -134,11 +135,61 @@ proc recv {} {
 	if {[regexp {[^ ]+ +PRIVMSG } $line]} {
 		handleMsg $line
 	} else {
-		.t.txt insert end "$line\n"
-		adjustWin
+		set cols [split $line]
+
+		set print 1
+		switch [lindex $cols 1] {
+			353 {
+				# names
+				if {!$::inNames} {
+					set ::names ""
+					set ::inNames 1
+				}
+
+				lappend ::names [string range [lindex $cols 5] 1 end]
+				lappend ::names {*}[lrange $cols 6 end]
+			}
+
+			366 {
+				# end of names
+				set ::names [lsort $::names]
+				set ::inNames 0
+
+				set print 0 ;# don't need to see
+			}
+		}
+
+		if {$print} {
+			.t.txt insert end "$line\n"
+			adjustWin
+		}
 	}
 }
 
+proc completeName {} {
+	set s [.t.cmd get]
+	set i [.t.cmd index insert]
+	if {[string index $s $i] == " "} {
+		incr i -1
+	}
+
+	set i [string wordstart $s $i]
+
+	set e [string wordend   $s $i]
+
+	set ss [string range $s $i $e-1]
+
+	set li [lsearch -regexp $::names $ss]
+	set name [lindex $::names $li]
+	if {[string index $name 0] == "@"} {
+		set name [string range $name 1 end]
+	}
+
+	.t.cmd delete $i $e
+	.t.cmd insert $i $name
+}
+
+####################################################################
 wm withdraw .
 toplevel .t
 
@@ -158,6 +209,7 @@ foreach color $colors {
 
 pack [entry .t.cmd] -expand 1 -fill x
 bind .t.cmd <Return> post
+bind .t.cmd <Tab> {completeName; break}
  
 proc connect {} {
 	.t.txt insert end "Connecting to $::server\n"
