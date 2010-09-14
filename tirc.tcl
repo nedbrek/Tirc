@@ -2,6 +2,7 @@ set server "BROOKVILLE.PA.US.StarLink-IRC.Org"
 set chn #prosapologian
 set ::gotPing 0
 set ::inNames 0
+set ::nick    Ned
 
 # high contrast colors for different people
 set colors {
@@ -157,6 +158,12 @@ proc recv {} {
 
 				set print 0 ;# don't need to see
 			}
+
+			KICK {
+				if {[lindex $cols 3] eq $::nick} {
+					send "JOIN $::chn"
+				}
+			}
 		}
 
 		if {$print} {
@@ -220,7 +227,7 @@ proc connect {} {
 
 	fileevent $::net readable recv
 
-	send "NICK Ned"
+	send "NICK $::nick"
 	send "USER ned ned ned :NedBrek"
 }
 connect
