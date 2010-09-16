@@ -104,7 +104,8 @@ proc handleMsg {line} {
 		.t.txt insert end "* $sendName " $nc
 
 		# strip the trailing 1
-		set cols [lreplace $cols end end [string range [lindex $cols end] 0 end-1]]
+		set cols [lreplace $cols end end \
+        [string range [lindex $cols end] 0 end-1]]
 	} else {
 		.t.txt insert end "$sendName $first " $nc
 	}
@@ -153,7 +154,6 @@ proc recv {} {
 
 			366 {
 				# end of names
-				set ::names [lsort $::names]
 				set ::inNames 0
 
 				set print 0 ;# don't need to see
