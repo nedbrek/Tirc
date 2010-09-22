@@ -164,6 +164,16 @@ proc recv {} {
 					send "JOIN $::chn"
 				}
 			}
+
+			QUIT {
+				set sender [lindex $cols 0]
+				set bangIdx [string first "!" $sender]
+				set sendName [string range $sender 1 $bangIdx-1]
+				set li [lsearch -regexp $::names "@?$sendName"]
+				if {$li != -1} {
+					set ::names [lreplace $::names $li $li]
+				}
+			}
 		}
 
 		if {$print} {
@@ -218,6 +228,11 @@ pack [entry .t.cmd] -expand 1 -fill x
 bind .t.cmd <Return> post
 bind .t.cmd <Tab> {completeName; break}
  
+####################################################################
+toplevel .tNames
+pack [listbox .tNames.lb -listvariable names -height 25]
+
+####################################################################
 proc connect {} {
 	.t.txt insert end "Connecting to $::server\n"
 
