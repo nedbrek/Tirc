@@ -165,6 +165,17 @@ proc recv {} {
 				}
 			}
 
+			NICK {
+				set sender [lindex $cols 0]
+				set bangIdx [string first "!" $sender]
+				set sendName [string range $sender 1 $bangIdx-1]
+				set li [lsearch -regexp $::names "@?$sendName"]
+				if {$li != -1} {
+					set newNick [string range [lindex $cols 2] 1 end]
+					set ::names [lreplace $::names $li $li $newNick]
+				}
+			}
+
 			QUIT {
 				set sender [lindex $cols 0]
 				set bangIdx [string first "!" $sender]
