@@ -241,7 +241,12 @@ bind .t.cmd <Tab> {completeName; break}
  
 ####################################################################
 toplevel .tNames
-pack [listbox .tNames.lb -listvariable names -height 25]
+
+pack [listbox .tNames.lb -listvariable names -height 25
+-yscrollcommand ".tNames.scrollV set"] -side left
+
+pack [scrollbar .tNames.scrollV -orient vert -command ".tNames.lb yview"
+] -side right -expand 1 -fill y
 
 ####################################################################
 proc connect {} {
