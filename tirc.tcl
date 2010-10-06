@@ -55,6 +55,7 @@ proc post {} {
 
 			nick {
 				send "NICK $line"
+				set ::nick $line
 			}
 
 			quit {
