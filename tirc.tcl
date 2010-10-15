@@ -160,6 +160,13 @@ proc recv {} {
 				set print 0 ;# don't need to see
 			}
 
+			JOIN {
+				set sender [lindex $cols 0]
+				set bangIdx [string first "!" $sender]
+				set sendName [string range $sender 1 $bangIdx-1]
+				lappend ::names $sendName
+			}
+
 			KICK {
 				if {[lindex $cols 3] eq $::nick} {
 					send "JOIN $::chn"
