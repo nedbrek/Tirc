@@ -1,4 +1,4 @@
-set server "BROOKVILLE.PA.US.StarLink-IRC.Org"
+set server "knox.genevairc.net"
 set chn #prosapologian
 set ::gotPing 0
 set ::inNames 0
