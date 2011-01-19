@@ -1,8 +1,20 @@
-set server "knox.genevairc.net"
-set chn #prosapologian
 set ::gotPing 0
 set ::inNames 0
-set ::nick    Ned
+set resourceFileName .tircrc
+
+### handle resource file
+if {![file exists [file join ~ $resourceFileName]]} {
+	set server "knox.genevairc.net"
+	set chn #prosapologian
+	set ::nick    Ned
+
+	set f [open [file join ~ $resourceFileName] w]
+} else {
+	set f [open [file join ~ $resourceFileName]]
+	eval [read $f]
+}
+close $f
+unset f
 
 # high contrast colors for different people
 set colors {
