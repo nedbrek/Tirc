@@ -2,17 +2,78 @@ set ::gotPing 0
 set ::inNames 0
 set resourceFileName .tircrc
 
-### handle resource file
-if {![file exists [file join ~ $resourceFileName]]} {
-	set server "knox.genevairc.net"
-	set chn #prosapologian
-	set ::nick    Ned
+proc saveServInfo {} {
+	set ::server [.tsi.eServ get]
+	set ::chn    [.tsi.eChn  get]
+	set ::nick   [.tsi.eNick get]
+}
 
-	set f [open [file join ~ $resourceFileName] w]
-} else {
+proc createServInfoWin {} {
+	toplevel .tsi
+	grid [label .tsi.lServ -text "Server:"] -row 0 -column 0
+	grid [entry .tsi.eServ] -row 0 -column 1
+	if {[info exists ::server]} {
+		.tsi.eServ insert end $::server
+	}
+
+	grid [label .tsi.lChn -text "Channel:"] -row 1 -column 0
+	grid [entry .tsi.eChn] -row 1 -column 1
+	if {[info exists ::chn]} {
+		.tsi.eChn insert end $::chn
+	}
+
+	grid [label .tsi.lNick -text "Nickname:"] -row 2 -column 0
+	grid [entry .tsi.eNick] -row 2 -column 1
+	if {[info exists ::nick]} {
+		.tsi.eNick insert end $::nick
+	}
+
+	grid [button .tsi.bOk -text "Ok" -command {
+		saveServInfo
+		destroy .tsi
+	}] -row 3 -column 0
+
+	grid [button .tsi.bCan -text "Cancel" -command {destroy .tsi}
+	] -row 3 -column 1
+}
+
+proc getServInfo {} {
+	createServInfoWin
+	tkwait window .tsi
+}
+
+### handle resource file
+# read existing
+if {[file exists [file join ~ $resourceFileName]]} {
+
 	set f [open [file join ~ $resourceFileName]]
 	eval [read $f]
+	close $f
+	unset f
+
+} else {
+	# prompt user
+	getServInfo
 }
+
+# check results
+while {![info exists ::server] || $::server eq "" ||
+	    ![info exists ::nick]   || $::nick eq "" ||
+       ![info exists ::chn]    || $::chn eq ""} {
+
+	set r [tk_messageBox -message "No channel information set, Quit?" \
+	       -title "Quit" -type yesno]
+
+	if {$r eq "yes"} {exit}
+
+	getServInfo
+}
+
+# write current
+set f [open [file join ~ $resourceFileName] w]
+puts $f "set server $::server"
+puts $f "set chn    $::chn"
+puts $f "set nick   $::nick"
 close $f
 unset f
 
