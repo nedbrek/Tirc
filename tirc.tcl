@@ -329,6 +329,16 @@ pack [listbox .tNames.lb -listvariable names -height 25 \
 pack [scrollbar .tNames.scrollV -orient vert -command ".tNames.lb yview"
 ] -side right -expand 1 -fill y
 
+menu .mTopMenu -tearoff 0
+menu .mTopMenu.mSettings -tearoff 0
+
+.mTopMenu add cascade -label "Settings" -menu .mTopMenu.mSettings -underline 0
+
+.mTopMenu.mSettings add command -label "Host Info" -underline 0 \
+  -command getServInfo
+
+.t configure -menu .mTopMenu
+
 ####################################################################
 proc connect {} {
 	.t.txt insert end "Connecting to $::server\n"
