@@ -99,7 +99,7 @@ proc adjustWin {} {
 proc nickcolor {nick} {
 	binary scan $nick c* v
 	set hash 4817
-	set op +
+	set op *
 
 	foreach x $v {
 		set hash [expr "$hash $op $x"]
