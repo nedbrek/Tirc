@@ -88,13 +88,6 @@ set colors {
 	darkslategrey
 }
 
-proc adjustWin {} {
-	set cursor [.t.fTop.scrollV get]
-	if {[lindex $cursor 1] == 1.0} {
-		.t.txt yview end
-	}
-}
-
 # assign a random (but deterministic) color to a nick
 proc nickcolor {nick} {
 	binary scan $nick c* v
@@ -113,6 +106,20 @@ proc nickcolor {nick} {
 proc send {msg} {
 	puts $::net $msg
 	flush $::net
+}
+
+proc adjustWin {w} {
+	set cursor [$w.fTop.scrollV get]
+	if {[lindex $cursor 1] == 1.0} {
+		$w.txt yview end
+	}
+}
+
+proc log {w msg {tag ""}} {
+	$w.txt configure -state normal
+	$w.txt insert end "$msg" $tag
+	$w.txt configure -state disabled
+	adjustWin $w
 }
 
 proc post {} {
@@ -139,8 +146,7 @@ proc post {} {
 		send "PRIVMSG $::chn :$msg"
 	}
 
-	.t.txt insert end "$msg\n"
-	adjustWin
+	log .t "$msg\n"
 
 	.t.cmd delete 0 end
 }
@@ -153,8 +159,7 @@ proc handlePing {code} {
 		set ::gotPing 1
 	}
 
-	.t.txt insert end "PONG $code\n" ping
-	adjustWin
+	log .t "PONG $code\n" ping
 }
 
 # a normal message
@@ -175,18 +180,16 @@ proc handleMsg {line} {
 
 	set first [string range [lindex $cols 3] 1 end]
 	if {$first == "\001ACTION"} {
-		.t.txt insert end "* $sendName " $nc
+		log .t "* $sendName " $nc
 
 		# strip the trailing 1
 		set cols [lreplace $cols end end \
         [string range [lindex $cols end] 0 end-1]]
 	} else {
-		.t.txt insert end "$sendName $first " $nc
+		log .t "$sendName $first " $nc
 	}
 
-	.t.txt insert end "[join [lrange $cols 4 end]]\n" $nc
-
-	adjustWin
+	log .t "[join [lrange $cols 4 end]]\n" $nc
 }
 
 proc recv {} {
@@ -194,15 +197,14 @@ proc recv {} {
 		fileevent $::net readable ""
 		close $::net
 
-		.t.txt insert end "Socket closed\n"
-		adjustWin
+		log .t "Socket closed\n"
 		return
 	}
 
 	gets $::net line
 
 	if [regexp {^PING (:[0-9A-Za-z.\-]+)} $line -> code] {
-		.t.txt insert end "$line\n" ping
+		log .t "$line\n" ping
 		handlePing $code
 
 		return
@@ -243,6 +245,7 @@ proc recv {} {
 			KICK {
 				if {[lindex $cols 3] eq $::nick} {
 					send "JOIN $::chn"
+				} else {
 				}
 			}
 
@@ -269,8 +272,7 @@ proc recv {} {
 		}
 
 		if {$print} {
-			.t.txt insert end "$line\n"
-			adjustWin
+			log .t "$line\n"
 		}
 	}
 }
@@ -308,7 +310,7 @@ pack [scrollbar .t.fTop.scrollV -orient vert -command ".t.txt yview"
 ] -side right -expand 1 -fill y
 
 # create the main text widget
-pack [text  .t.txt -yscrollcommand ".t.fTop.scrollV set"
+pack [text .t.txt -yscrollcommand ".t.fTop.scrollV set" -state disabled
 ] -expand 1 -fill both -in .t.fTop -side left
 
 foreach color $colors {
@@ -341,7 +343,7 @@ menu .mTopMenu.mSettings -tearoff 0
 
 ####################################################################
 proc connect {} {
-	.t.txt insert end "Connecting to $::server\n"
+	log .t "Connecting to $::server\n"
 
 	set ::gotPing 0
 	set ::net [socket $::server 6667]
