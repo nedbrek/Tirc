@@ -151,6 +151,13 @@ proc post {} {
 	.t.cmd delete 0 end
 }
 
+proc joinTimeout {} {
+	if {!$::gotPing} {
+		send "JOIN $::chn"
+		set ::gotPing 1
+	}
+}
+
 proc handlePing {code} {
 	send "PONG $code"
 
@@ -353,6 +360,7 @@ proc connect {} {
 
 	send "NICK $::nick"
 	send "USER ned ned ned :NedBrek"
+	after 5000 joinTimeout 
 }
 connect
 
