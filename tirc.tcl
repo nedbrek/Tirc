@@ -123,7 +123,7 @@ proc log {w msg {tag ""}} {
 }
 
 proc post {} {
-	set msg [.t.cmd get]
+	set msg [string trimright [.t.cmd get 1.0 end]]
 	if {$msg eq ""} {return}
 
 	if {[regexp {^ */([^ ]+) *(.*)} $msg -> cmd line]} {
@@ -148,7 +148,7 @@ proc post {} {
 
 	log .t "$msg\n"
 
-	.t.cmd delete 0 end
+	.t.cmd delete 1.0 end
 }
 
 proc joinTimeout {} {
@@ -191,7 +191,7 @@ proc handleMsg {line} {
 
 		# strip the trailing 1
 		set cols [lreplace $cols end end \
-        [string range [lindex $cols end] 0 end-1]]
+		  [string range [lindex $cols end] 0 end-1]]
 	} else {
 		log .t "$sendName $first " $nc
 	}
@@ -285,9 +285,12 @@ proc recv {} {
 }
 
 proc completeName {} {
-	set s [.t.cmd get]
-	set i [.t.cmd index insert]
-	if {[string index $s $i] == " "} {
+	set s [.t.cmd get 1.0 end]
+
+	set i [lindex [split [.t.cmd index insert] .] 1]
+
+	set si [string index $s $i]
+	if {$si eq " " || $si eq "\n"} {
 		incr i -1
 	}
 
@@ -303,8 +306,8 @@ proc completeName {} {
 		set name [string range $name 1 end]
 	}
 
-	.t.cmd delete $i $e
-	.t.cmd insert $i $name
+	.t.cmd delete 1.$i 1.$e
+	.t.cmd insert 1.$i $name
 }
 
 ####################################################################
@@ -325,8 +328,8 @@ foreach color $colors {
 }
 .t.txt tag config ping -foreground lightgrey
 
-pack [entry .t.cmd] -expand 1 -fill x
-bind .t.cmd <Return> post
+pack [text .t.cmd -height 1] -expand 1 -fill x
+bind .t.cmd <Return> {post; break}
 bind .t.cmd <Tab> {completeName; break}
  
 ####################################################################
