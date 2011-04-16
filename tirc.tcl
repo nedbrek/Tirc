@@ -2,10 +2,41 @@ set ::gotPing 0
 set ::inNames 0
 set resourceFileName .tircrc
 
+# write current server info
+proc saveAllServers {} {
+	set f [open [file join ~ $::resourceFileName] w]
+
+	puts $f "set server $::server"
+	puts $f "set chn    $::chn"
+	puts $f "set nick   $::nick"
+
+	set ct 0
+
+	foreach cfg [lsort -integer [array names ::servers]] {
+		puts $f "set ::servers($ct) [list $::servers($cfg)]"
+
+		incr ct
+	}
+
+	close $f
+}
+
 proc saveServInfo {} {
-	set ::server [.tsi.eServ get]
-	set ::chn    [.tsi.eChn  get]
-	set ::nick   [.tsi.eNick get]
+	set sv [.tsi.eServ get]
+	set cn [.tsi.eChn  get]
+	set nk [.tsi.eNick get]
+
+	if {$sv eq "" || $cn eq "" || $nk eq ""} {
+		tk_messageBox -message "Invalid configuration: All fields required"
+		return
+	}
+
+	set ::server $sv
+	set ::chn    $cn
+	set ::nick   $nk
+
+	set ct [llength [array names ::servers]]
+	set ::servers($ct) [list $::server $::chn $::nick]
 }
 
 proc createServInfoWin {} {
@@ -69,13 +100,6 @@ while {![info exists ::server] || $::server eq "" ||
 	getServInfo
 }
 
-# write current
-set f [open [file join ~ $resourceFileName] w]
-puts $f "set server $::server"
-puts $f "set chn    $::chn"
-puts $f "set nick   $::nick"
-close $f
-unset f
 
 # high contrast colors for different people
 set colors {
@@ -209,6 +233,7 @@ proc recv {} {
 	}
 
 	gets $::net line
+#puts $line;#debugging
 
 	if [regexp {^PING (:[0-9A-Za-z.\-]+)} $line -> code] {
 		log .t "$line\n" ping
@@ -362,8 +387,7 @@ proc connect {} {
 	fileevent $::net readable recv
 
 	send "NICK $::nick"
-	send "USER ned ned ned :NedBrek"
+	send "USER $::nick $::nick $::nick :$::nick"
 	after 5000 joinTimeout 
 }
-connect
 
