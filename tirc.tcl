@@ -2,6 +2,29 @@ set ::gotPing 0
 set ::inNames 0
 set resourceFileName .tircrc
 
+proc setServer {idx} {
+	set cfg $::servers($idx)
+
+	set ::server [lindex $cfg 0]
+	set ::chn    [lindex $cfg 1]
+	set ::nick   [lindex $cfg 2]
+}
+
+proc showServers {} {
+	toplevel .tServers
+
+	foreach i [lsort -integer [array names ::servers]] {
+		set cfg $::servers($i)
+
+		grid [label .tServers.lS$i -text "[lindex $cfg 0]"] -row $i -column 0
+		grid [label .tServers.lC$i -text "[lindex $cfg 1]"] -row $i -column 1
+		grid [label .tServers.lN$i -text "[lindex $cfg 2]"] -row $i -column 2
+
+		grid [button .tServers.bS$i -text "Set" -command "setServ $i"] \
+-row $i -column 3
+	}
+}
+
 # write current server info
 proc saveAllServers {} {
 	set f [open [file join ~ $::resourceFileName] w]
@@ -30,10 +53,6 @@ proc saveServInfo {} {
 		tk_messageBox -message "Invalid configuration: All fields required"
 		return
 	}
-
-	set ::server $sv
-	set ::chn    $cn
-	set ::nick   $nk
 
 	set ct [llength [array names ::servers]]
 	set ::servers($ct) [list $::server $::chn $::nick]
@@ -88,9 +107,7 @@ if {[file exists [file join ~ $resourceFileName]]} {
 }
 
 # check results
-while {![info exists ::server] || $::server eq "" ||
-	    ![info exists ::nick]   || $::nick eq "" ||
-       ![info exists ::chn]    || $::chn eq ""} {
+while {![info exists ::servers] || [array names $::servers] eq ""} {
 
 	set r [tk_messageBox -message "No channel information set, Quit?" \
 	       -title "Quit" -type yesno]
