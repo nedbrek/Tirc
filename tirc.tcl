@@ -107,7 +107,7 @@ if {[file exists [file join ~ $resourceFileName]]} {
 }
 
 # check results
-while {![info exists ::servers] || [array names $::servers] eq ""} {
+while {![info exists ::servers] || [array names ::servers] eq ""} {
 
 	set r [tk_messageBox -message "No channel information set, Quit?" \
 	       -title "Quit" -type yesno]
