@@ -55,7 +55,7 @@ proc saveServInfo {} {
 	}
 
 	set ct [llength [array names ::servers]]
-	set ::servers($ct) [list $::server $::chn $::nick]
+	set ::servers($ct) [list $sv $cn $nk]
 }
 
 proc createServInfoWin {} {
