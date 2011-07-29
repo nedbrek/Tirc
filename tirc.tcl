@@ -154,14 +154,14 @@ proc send {msg} {
 proc adjustWin {w} {
 	set cursor [$w.fTop.scrollV get]
 	if {[lindex $cursor 1] == 1.0} {
-		$w.txt yview end
+		$w.fTop.txt yview end
 	}
 }
 
 proc log {w msg {tag ""}} {
-	$w.txt configure -state normal
-	$w.txt insert end "$msg" $tag
-	$w.txt configure -state disabled
+	$w.fTop.txt configure -state normal
+	$w.fTop.txt insert end "$msg" $tag
+	$w.fTop.txt configure -state disabled
 	adjustWin $w
 }
 
@@ -360,19 +360,19 @@ toplevel .t
 
 pack [frame .t.fTop] -side top -fill both -expand 1
 
-pack [scrollbar .t.fTop.scrollV -orient vert -command ".t.txt yview"
+pack [scrollbar .t.fTop.scrollV -orient vert -command ".t.fTop.txt yview"
 ] -side right -expand 1 -fill y
 
 # create the main text widget
-pack [text .t.txt -yscrollcommand ".t.fTop.scrollV set" -state disabled
-] -expand 1 -fill both -in .t.fTop -side left
+pack [text .t.fTop.txt -yscrollcommand ".t.fTop.scrollV set" -state disabled
+] -expand 1 -fill both -side left
 
 foreach color $colors {
-	.t.txt tag config $color -foreground $color
+	.t.fTop.txt tag config $color -foreground $color
 }
-.t.txt tag config ping -foreground lightgrey
+.t.fTop.txt tag config ping -foreground lightgrey
 
-pack [text .t.cmd -height 1] -expand 1 -fill x
+pack [text .t.cmd -height 1]
 bind .t.cmd <Return> {post; break}
 bind .t.cmd <Tab> {completeName; break}
  
