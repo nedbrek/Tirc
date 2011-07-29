@@ -1,3 +1,5 @@
+package require Tk
+
 set ::gotPing 0
 set ::inNames 0
 set resourceFileName .tircrc
