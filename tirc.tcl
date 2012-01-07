@@ -1,9 +1,49 @@
 package require Tk
 
+##############################################################################
+# global state
 set ::gotPing 0
 set ::inNames 0
 set resourceFileName .tircrc
 
+# current connection
+set ::server ""
+set ::chn    ""
+set ::nick   ""
+
+##############################################################################
+# nick colorization
+
+# high contrast colors for different people
+set ::colors {
+	darkblue
+	darkgreen
+	darkcyan
+	darkred
+	darkmagenta
+	darkorange
+	darkslategrey
+}
+
+# assign a random (but deterministic) color to a nick
+proc nickcolor {nick} {
+	binary scan $nick c* v
+	set hash 4817
+	set op *
+
+	foreach x $v {
+		set hash [expr "$hash $op $x"]
+		set op [if {$op eq {+}} {concat *} {concat +}]
+	}
+
+	set hash [expr {$hash % [llength $::colors]}]
+	return [lindex $::colors $hash]
+}
+
+##############################################################################
+# server management
+
+# make the current settings match 'idx'
 proc setServer {idx} {
 	set cfg $::servers($idx)
 
@@ -12,8 +52,10 @@ proc setServer {idx} {
 	set ::nick   [lindex $cfg 2]
 }
 
+# show a dialog with all configured servers, along with "Set" buttons for each
 proc showServers {} {
 	toplevel .tServers
+	wm title .tServers "Servers"
 
 	foreach i [lsort -integer [array names ::servers]] {
 		set cfg $::servers($i)
@@ -22,12 +64,12 @@ proc showServers {} {
 		grid [label .tServers.lC$i -text "[lindex $cfg 1]"] -row $i -column 1
 		grid [label .tServers.lN$i -text "[lindex $cfg 2]"] -row $i -column 2
 
-		grid [button .tServers.bS$i -text "Set" -command "setServ $i"] \
+		grid [button .tServers.bS$i -text "Set" -command [list setServ $i]] \
 -row $i -column 3
 	}
 }
 
-# write current server info
+# write current server info to resource file
 proc saveAllServers {} {
 	set f [open [file join ~ $::resourceFileName] w]
 
@@ -46,6 +88,8 @@ proc saveAllServers {} {
 	close $f
 }
 
+# helper for createServInfoWin
+# save the dialog settings into the server array
 proc saveServInfo {} {
 	set sv [.tsi.eServ get]
 	set cn [.tsi.eChn  get]
@@ -60,8 +104,11 @@ proc saveServInfo {} {
 	set ::servers($ct) [list $sv $cn $nk]
 }
 
+# create a dialog to get server settings
+# new server is saved to the ::servers array
 proc createServInfoWin {} {
 	toplevel .tsi
+
 	grid [label .tsi.lServ -text "Server:"] -row 0 -column 0
 	grid [entry .tsi.eServ] -row 0 -column 1
 	if {[info exists ::server]} {
@@ -87,13 +134,11 @@ proc createServInfoWin {} {
 
 	grid [button .tsi.bCan -text "Cancel" -command {destroy .tsi}
 	] -row 3 -column 1
-}
 
-proc getServInfo {} {
-	createServInfoWin
 	tkwait window .tsi
 }
 
+##############################################################################
 ### handle resource file
 # read existing
 if {[file exists [file join ~ $resourceFileName]]} {
@@ -105,7 +150,7 @@ if {[file exists [file join ~ $resourceFileName]]} {
 
 } else {
 	# prompt user
-	getServInfo
+	createServInfoWin
 }
 
 # check results
@@ -116,41 +161,13 @@ while {![info exists ::servers] || [array names ::servers] eq ""} {
 
 	if {$r eq "yes"} {exit}
 
-	getServInfo
+	createServInfoWin
 }
 
+##############################################################################
+# text widget management
 
-# high contrast colors for different people
-set colors {
-	darkblue
-	darkgreen
-	darkcyan
-	darkred
-	darkmagenta
-	darkorange
-	darkslategrey
-}
-
-# assign a random (but deterministic) color to a nick
-proc nickcolor {nick} {
-	binary scan $nick c* v
-	set hash 4817
-	set op *
-
-	foreach x $v {
-		set hash [expr "$hash $op $x"]
-		set op [if {$op eq {+}} {concat *} {concat +}]
-	}
-
-	set hash [expr {$hash % [llength $::colors]}]
-	return [lindex $::colors $hash]
-}
-
-proc send {msg} {
-	puts $::net $msg
-	flush $::net
-}
-
+# make the bottom visible (if not scrolling back)
 proc adjustWin {w} {
 	set cursor [$w.fTop.scrollV get]
 	if {[lindex $cursor 1] == 1.0} {
@@ -158,17 +175,27 @@ proc adjustWin {w} {
 	}
 }
 
+# append 'msg' to 'w' with 'tag'
 proc log {w msg {tag ""}} {
 	$w.fTop.txt configure -state normal
-	$w.fTop.txt insert end "$msg" $tag
+	$w.fTop.txt insert end $msg $tag
 	$w.fTop.txt configure -state disabled
 	adjustWin $w
 }
 
+##############################################################################
+# send 'msg' to the current net connection
+proc send {msg} {
+	puts $::net $msg
+	flush $::net
+}
+
+# process current command line
 proc post {} {
 	set msg [string trimright [.t.cmd get 1.0 end]]
-	if {$msg eq ""} {return}
+	if {$msg eq ""} {return} ;# nothing to do
 
+	# check for slash command
 	if {[regexp {^ */([^ ]+) *(.*)} $msg -> cmd line]} {
 		switch $cmd {
 			me {
@@ -355,8 +382,10 @@ proc completeName {} {
 }
 
 ####################################################################
+# main gui
 wm withdraw .
 toplevel .t
+wm title .t "Tirc"
 
 pack [frame .t.fTop] -side top -fill both -expand 1
 
@@ -372,11 +401,26 @@ foreach color $colors {
 }
 .t.fTop.txt tag config ping -foreground lightgrey
 
+# command line
 pack [text .t.cmd -height 1]
 bind .t.cmd <Return> {post; break}
 bind .t.cmd <Tab> {completeName; break}
  
+# menu
+menu .mTopMenu -tearoff 0
+menu .mTopMenu.mSettings -tearoff 0
+
+.mTopMenu add cascade -label "Settings" -menu .mTopMenu.mSettings -underline 0
+
+.mTopMenu.mSettings add command -label "Host Info" -underline 0 \
+  -command createServInfoWin
+.mTopMenu.mSettings add command -label "Servers" -underline 0 \
+  -command showServers
+
+.t configure -menu .mTopMenu
+
 ####################################################################
+# names window (current people in channel)
 toplevel .tNames
 
 pack [listbox .tNames.lb -listvariable names -height 25 \
@@ -385,19 +429,10 @@ pack [listbox .tNames.lb -listvariable names -height 25 \
 pack [scrollbar .tNames.scrollV -orient vert -command ".tNames.lb yview"
 ] -side right -expand 1 -fill y
 
-menu .mTopMenu -tearoff 0
-menu .mTopMenu.mSettings -tearoff 0
-
-.mTopMenu add cascade -label "Settings" -menu .mTopMenu.mSettings -underline 0
-
-.mTopMenu.mSettings add command -label "Host Info" -underline 0 \
-  -command getServInfo
-
-.t configure -menu .mTopMenu
-
 ####################################################################
 proc connect {} {
 	log .t "Connecting to $::server\n"
+	wm title .t "Tirc $::server"
 
 	set ::gotPing 0
 	set ::net [socket $::server 6667]
