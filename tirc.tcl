@@ -64,7 +64,7 @@ proc showServers {} {
 		grid [label .tServers.lC$i -text "[lindex $cfg 1]"] -row $i -column 1
 		grid [label .tServers.lN$i -text "[lindex $cfg 2]"] -row $i -column 2
 
-		grid [button .tServers.bS$i -text "Set" -command [list setServ $i]] \
+		grid [button .tServers.bS$i -text "Set" -command [list setServer $i]] \
 -row $i -column 3
 	}
 }
@@ -102,6 +102,8 @@ proc saveServInfo {} {
 
 	set ct [llength [array names ::servers]]
 	set ::servers($ct) [list $sv $cn $nk]
+	setServer $ct
+	saveAllServers
 }
 
 # create a dialog to get server settings
