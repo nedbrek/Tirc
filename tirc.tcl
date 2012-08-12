@@ -205,6 +205,11 @@ proc post {} {
 				send "PRIVMSG $::chn :$sendout"
 			}
 
+			msg {
+				set tgt [lindex $line 0]
+				send "PRIVMSG $tgt :[lrange $line 1 end]"
+			}
+
 			nick {
 				send "NICK $line"
 				set ::nick $line
