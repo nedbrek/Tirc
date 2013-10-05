@@ -197,8 +197,14 @@ proc post {} {
 	set msg [string trimright [.t.cmd get 1.0 end]]
 	if {$msg eq ""} {return} ;# nothing to do
 
-	# check for slash command
-	if {[regexp {^ */([^ ]+) *(.*)} $msg -> cmd line]} {
+	# check for embedded \n
+	set multiMsg [split $msg "\n"]
+	if {[llength $multiMsg] > 1} {
+		foreach m $multiMsg {
+			send "PRIVMSG $::chn :$m"
+		}
+	} elseif {[regexp {^ */([^ ]+) *(.*)} $msg -> cmd line]} {
+		# check for slash command
 		switch $cmd {
 			me {
 				set sendout "\001ACTION $line\001"
