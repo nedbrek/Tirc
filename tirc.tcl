@@ -388,6 +388,12 @@ proc completeName {} {
 	.t.cmd insert 1.$i $name
 }
 
+proc clearToCurrent {t} {
+	$t configure -state normal
+	$t delete 1.0 current
+	$t configure -state disabled
+}
+
 ####################################################################
 # main gui
 wm withdraw .
