@@ -400,30 +400,33 @@ proc clearToCurrent {t} {
 	$t configure -state disabled
 }
 
+proc makeWindow {t} {
+	toplevel $t
+	wm title $t "Tirc"
+
+	pack [frame $t.fTop] -side top -fill both -expand 1
+	# scrollbar
+	pack [scrollbar $t.fTop.scrollV -orient vert -command "$t.fTop.txt yview"
+] -side right -expand 1 -fill y
+
+	# create the main text widget
+	pack [text $t.fTop.txt -yscrollcommand "$t.fTop.scrollV set" -state disabled
+] -expand 1 -fill both -side left
+
+	foreach color $::colors {
+		$t.fTop.txt tag config $color -foreground $color
+	}
+	$t.fTop.txt tag config ping -foreground lightgrey
+
+	# command line
+	pack [text $t.cmd -height 1]
+	bind $t.cmd <Return> {post; break}
+	bind $t.cmd <Tab> {completeName; break}
+}
+
 ####################################################################
 # main gui
 wm withdraw .
-toplevel .t
-wm title .t "Tirc"
-
-pack [frame .t.fTop] -side top -fill both -expand 1
-
-pack [scrollbar .t.fTop.scrollV -orient vert -command ".t.fTop.txt yview"
-] -side right -expand 1 -fill y
-
-# create the main text widget
-pack [text .t.fTop.txt -yscrollcommand ".t.fTop.scrollV set" -state disabled
-] -expand 1 -fill both -side left
-
-foreach color $colors {
-	.t.fTop.txt tag config $color -foreground $color
-}
-.t.fTop.txt tag config ping -foreground lightgrey
-
-# command line
-pack [text .t.cmd -height 1]
-bind .t.cmd <Return> {post; break}
-bind .t.cmd <Tab> {completeName; break}
  
 # menu
 menu .mTopMenu -tearoff 0
@@ -436,6 +439,7 @@ menu .mTopMenu.mSettings -tearoff 0
 .mTopMenu.mSettings add command -label "Servers" -underline 0 \
   -command showServers
 
+makeWindow .t
 .t configure -menu .mTopMenu
 
 ####################################################################
