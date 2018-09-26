@@ -171,17 +171,17 @@ while {![info exists ::servers] || [array names ::servers] eq ""} {
 
 # make the bottom visible (if not scrolling back)
 proc adjustWin {w} {
-	set cursor [$w.fTop.scrollV get]
+	set cursor [$w.scrollV get]
 	if {[lindex $cursor 1] == 1.0} {
-		$w.fTop.txt yview end
+		$w.txt yview end
 	}
 }
 
 # append 'msg' to 'w' with 'tag'
 proc log {w msg {tag ""}} {
-	$w.fTop.txt configure -state normal
-	$w.fTop.txt insert end $msg $tag
-	$w.fTop.txt configure -state disabled
+	$w.txt configure -state normal
+	$w.txt insert end $msg $tag
+	$w.txt configure -state disabled
 	adjustWin $w
 }
 
@@ -404,22 +404,21 @@ proc makeWindow {t} {
 	toplevel $t
 	wm title $t "Tirc"
 
-	pack [frame $t.fTop] -side top -fill both -expand 1
 	# scrollbar
-	pack [scrollbar $t.fTop.scrollV -orient vert -command "$t.fTop.txt yview"
-] -side right -expand 1 -fill y
+	grid [scrollbar $t.scrollV -orient vert -command "$t.txt yview"] -row 0 -column 1 -sticky ns
 
 	# create the main text widget
-	pack [text $t.fTop.txt -yscrollcommand "$t.fTop.scrollV set" -state disabled
-] -expand 1 -fill both -side left
+	grid [text $t.txt -yscrollcommand "$t.scrollV set" -state disabled] -row 0 -column 0 -sticky nsew
+	grid columnconfigure $t 0 -weight 1
+	grid rowconfigure $t 0 -weight 1
 
 	foreach color $::colors {
-		$t.fTop.txt tag config $color -foreground $color
+		$t.txt tag config $color -foreground $color
 	}
-	$t.fTop.txt tag config ping -foreground lightgrey
+	$t.txt tag config ping -foreground lightgrey
 
 	# command line
-	pack [text $t.cmd -height 1]
+	grid [text $t.cmd -height 1] -row 1 -column 0 -columnspan 2 -sticky ew
 	bind $t.cmd <Return> {post; break}
 	bind $t.cmd <Tab> {completeName; break}
 }
@@ -450,7 +449,7 @@ pack [listbox .tNames.lb -listvariable names -height 25 \
 -yscrollcommand ".tNames.scrollV set"] -side left -fill y
 
 pack [scrollbar .tNames.scrollV -orient vert -command ".tNames.lb yview"
-] -side right -expand 1 -fill y
+] -side left -expand 1 -fill y
 
 ####################################################################
 proc connect {} {
