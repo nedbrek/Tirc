@@ -206,6 +206,14 @@ proc post {} {
 	} elseif {[regexp {^ */([^ ]+) *(.*)} $msg -> cmd line]} {
 		# check for slash command
 		switch $cmd {
+			join {
+				send "JOIN $line"
+			}
+
+			list {
+				send "LIST"
+			}
+
 			me {
 				set sendout "\001ACTION $line\001"
 				send "PRIVMSG $::chn :$sendout"
