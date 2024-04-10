@@ -3,6 +3,8 @@ package require Tk
 ##############################################################################
 # global state
 set ::gotPing 0
+set ::ready_to_join 0
+set ::joined 0
 set ::inNames 0
 set resourceFileName .tircrc
 
@@ -243,19 +245,21 @@ proc post {} {
 }
 
 proc joinTimeout {} {
-	if {!$::gotPing} {
+	set ::ready_to_join 1
+	if {$::gotPing} {
 		send "JOIN $::chn"
-		set ::gotPing 1
+		set ::joined 1
 	}
 }
 
 proc handlePing {code} {
 	send "PONG $code"
 
-	if {!$::gotPing} {
+	if {!$::joined && $::ready_to_join} {
 		send "JOIN $::chn"
-		set ::gotPing 1
+		set ::joined 1
 	}
+	set ::gotPing 1
 
 	log .t "PONG $code\n" ping
 }
@@ -376,6 +380,22 @@ proc recv {} {
 	}
 }
 
+proc connect {} {
+	log .t "Connecting to $::server\n"
+	wm title .t "Tirc $::server"
+
+	set ::gotPing 0
+	set ::net [socket $::server 6667]
+	fconfigure $::net -encoding utf-8
+
+	fileevent $::net readable recv
+
+	send "NICK $::nick"
+	send "USER $::nick $::nick $::nick :$::nick"
+	after 5000 joinTimeout 
+}
+
+####################################################################
 proc completeName {} {
 	set s [.t.cmd get 1.0 end]
 
@@ -437,14 +457,22 @@ wm withdraw .
  
 # menu
 menu .mTopMenu -tearoff 0
-menu .mTopMenu.mSettings -tearoff 0
 
-.mTopMenu add cascade -label "Settings" -menu .mTopMenu.mSettings -underline 0
+menu .mTopMenu.mNetwork -tearoff 0
+.mTopMenu add cascade -label "Network" -menu .mTopMenu.mNetwork -underline 0
 
-.mTopMenu.mSettings add command -label "Host Info" -underline 0 \
+.mTopMenu.mNetwork add command -label "Host Info" -underline 0 \
   -command createServInfoWin
-.mTopMenu.mSettings add command -label "Servers" -underline 0 \
+.mTopMenu.mNetwork add command -label "Servers" -underline 0 \
   -command showServers
+.mTopMenu.mNetwork add command -label "Connect" -underline 0 \
+  -command connect
+
+menu .mTopMenu.mView -tearoff 0
+.mTopMenu add cascade -label "View" -menu .mTopMenu.mView -underline 0
+
+.mTopMenu.mView add command -label "Clear Log" -underline 0 \
+  -command "clearToCurrent .t.txt"
 
 makeWindow .t
 .t configure -menu .mTopMenu
@@ -459,19 +487,4 @@ pack [listbox .tNames.lb -listvariable names -height 25 \
 pack [scrollbar .tNames.scrollV -orient vert -command ".tNames.lb yview"
 ] -side left -expand 1 -fill y
 
-####################################################################
-proc connect {} {
-	log .t "Connecting to $::server\n"
-	wm title .t "Tirc $::server"
-
-	set ::gotPing 0
-	set ::net [socket $::server 6667]
-	fconfigure $::net -encoding utf-8
-
-	fileevent $::net readable recv
-
-	send "NICK $::nick"
-	send "USER $::nick $::nick $::nick :$::nick"
-	after 5000 joinTimeout 
-}
 
